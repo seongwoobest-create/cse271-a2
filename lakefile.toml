@@ -1,0 +1,14 @@
+name = "cse271-a2"
+version = "0.1.0"
+defaultTargets = ["AeFunc", "ae-func"]
+testDriver = "Tests"
+
+[[lean_lib]]
+name = "AeFunc"
+
+[[lean_lib]]
+name = "Tests"
+
+[[lean_exe]]
+name = "ae-func"
+root = "Main"
