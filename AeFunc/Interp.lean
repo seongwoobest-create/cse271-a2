@@ -5,12 +5,12 @@ def updateEnv (env : Env) (x : String) (v : Value) : Env :=
   fun y ↦ if x == y then some v else env y
 
 /-- Bind identifiers to values in order, failing if their counts differ. -/
-def updateEnvMult (env : Env) (xs : List String) (vs : List Value) 
+def updateEnvMult (env : Env) (xs : List String) (vs : List Value)
     : Option Env :=
   match xs, vs with
-  | [], [] => sorry
-  | x :: xs', v :: vs' => sorry
-  | _, _ => sorry
+  | [], [] => some env
+  | x :: xs', v :: vs' => updateEnvMult (updateEnv env x v) xs' vs'
+  | _, _ => none
 
 mutual
 
@@ -33,8 +33,14 @@ mutual
   -/
   partial def interpMult (es : List Expr) (env : Env) : Option (List Value) :=
     match es with
-    | [] => sorry
-    | e :: es' => sorry
+    | [] => some []
+    | e :: es' =>
+      match interp e env with
+        | none => none
+        | some v =>
+          match interpMult es' env with
+            | none => none
+            | some vs => some (v::vs)
 
   /-- Evaluate an expression, returning `none` on error. -/
   partial def interp (e : Expr) (env : Env) : Option Value :=
@@ -50,7 +56,18 @@ mutual
       | some (.bool false) => interp f env
       | _ => none
     | .id x => env x
-    | .func xs b => sorry
-    | .app f as => sorry
-
+    | .func xs b => some (.clo xs b env)
+    | .app f as =>
+      match interp f env with
+      | some fv =>
+        match interpMult as env with
+          | some av =>
+            match fv with
+              | .clo xs b cenv =>
+                match updateEnvMult cenv xs av with
+                  | some newEnv => interp b newEnv
+                  | _ => none
+              | _ => none
+          | _ => none
+      | _ => none
 end
